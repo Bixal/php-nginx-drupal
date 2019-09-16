@@ -30,22 +30,6 @@ RUN curl -o composer-setup.php --remote-name "https://raw.githubusercontent.com/
 
 WORKDIR /root
 
-# The following section is all in the name of container caching. We copy over the code base AFTER building deps.
-# https://www.sentinelstand.com/article/composer-install-in-dockerfile-without-breaking-cache
-# http://bitjudo.com/blog/2014/03/13/building-efficient-dockerfiles-node-dot-js/
-
-WORKDIR /var/www/html
-COPY composer.json /var/www/html/
-COPY composer.lock /var/www/html/
-RUN composer install --no-scripts --no-autoloader
-
-COPY . /var/www/html
-
-WORKDIR /var/www/html
-
-RUN composer dump-autoload --optimize && \
-        composer run-script post-install-cmd
-
 # build the server from debian stretch and nginx 1.16 stable
 FROM php:7.1-fpm-stretch
 
@@ -155,9 +139,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY docker/php/php.ini /usr/local/etc/php
-COPY docker/supervisord.conf /etc/
-COPY docker/nginx.conf /etc/nginx/
+COPY php/php.ini /usr/local/etc/php
+COPY supervisord.conf /etc/
+COPY nginx.conf /etc/nginx/
 
 RUN curl https://github.com/hechoendrupal/drupal-console-launcher/releases/download/$DRUPAL_CONSOLE_VERSION/drupal.phar -L -o drupal.phar
 RUN mv drupal.phar /usr/local/bin/drupal
