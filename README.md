@@ -5,10 +5,15 @@ one docker container is to be used, like single container AWS Elastic Beanstalk.
 
 ## Included
 Image base - Debian Buster
+
 Nginx - 1.6.1
+
 Node.js - 12.x
+
 Composer - 1.9.1
+
 Drupal Console - latest stable
+
 Drush - latest stable
 
 ## Installing
