@@ -17,8 +17,7 @@ Drupal Console - latest stable
 Drush - latest stable
 
 ## Installing
-Available on [Dockerhub](https://hub.docker.com/r/bixal/php-nginx-drupal) but
-you will also need the php/php.ini, nginx.conf and supervisord.conf files.
+Available on [Dockerhub](https://hub.docker.com/r/bixal/php-nginx-drupal).
 
 ## Logs
 Sent to STDOUT for docker to capture.
