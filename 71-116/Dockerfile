@@ -41,6 +41,7 @@ ENV NGINX_DOC_ROOT /var/www/html/web
 ENV NGINX_VERSION   1.16.1
 ENV NJS_VERSION     0.3.5
 ENV PKG_RELEASE     1~buster
+ENV DRUSH_VERSION   0.6.0
 
 RUN set -x \
     && apt-get update \
@@ -147,6 +148,12 @@ COPY nginx.conf /etc/nginx/
 RUN curl https://drupalconsole.com/installer -L -o drupal.phar
 RUN mv drupal.phar /usr/local/bin/drupal
 RUN chmod +x /usr/local/bin/drupal
+
+# Install Drush launcher to add drush command to $PATH
+RUN curl -o drush.phar https://github.com/drush-ops/drush-launcher/releases/download/$DRUSH_VERSION/drush.phar
+RUN mv drush.phar /usr/local/bin/drush
+RUN chmod +x /usr/local/bin/drush
+
 
 # copy in the files that the builder image built for drupal
 COPY --from=builder /var/www/html /var/www/html
