@@ -1,5 +1,5 @@
 # build site dependencies from debian stretch php 7.3 image
-FROM php:7.1-buster as builder
+FROM php:7.3-buster as builder
 
 ENV NODE_VERSION 12.x
 
@@ -34,7 +34,7 @@ RUN curl -o composer-setup.php "https://raw.githubusercontent.com/composer/getco
 WORKDIR /root
 
 # build the server from debian stretch and nginx 1.16 stable
-FROM php:7.1-fpm-buster
+FROM php:7.3-fpm-buster
 
 # non root user to run the server after binding sockets as root
 ENV NGINX_DOC_ROOT /var/www/html/web
