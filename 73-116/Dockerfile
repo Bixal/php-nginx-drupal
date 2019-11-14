@@ -141,10 +141,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Grab config dependencies for php, nginx and supervisor
-RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/71-116/php/php.ini
-RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/71-116/nginx.conf
-RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/71-116/supervisord.conf
+# Grab config dependencies for php, nginx and supervisor from source repo
+RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/php.ini
+RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/nginx.conf
+RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/supervisord.conf
 RUN mv php.ini /usr/local/etc/php
 RUN mv supervisord.conf /etc/
 RUN mv nginx.conf /etc/nginx/
