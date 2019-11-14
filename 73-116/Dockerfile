@@ -1,5 +1,5 @@
 # build site dependencies from debian stretch php 7.3 image
-FROM php:7.1-buster as builder
+FROM php:7.3-buster as builder
 
 ENV NODE_VERSION 12.x
 
