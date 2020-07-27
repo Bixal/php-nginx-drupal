@@ -6,15 +6,11 @@ one docker container is to be used, like single container AWS Elastic Beanstalk.
 ## Included
 Image base - Debian Buster
 
-Nginx - 1.6.1
+Nginx - 1.18.0
 
-Node.js - 12.x
+Composer - latest
 
-Composer - 1.9.1
-
-Drupal Console - latest stable
-
-Drush - latest stable
+Drush - latest
 
 ## Installing
 Available on [Dockerhub](https://hub.docker.com/r/bixal/php-nginx-drupal).
