@@ -155,7 +155,7 @@ RUN mv drupal.phar /usr/local/bin/drupal
 RUN chmod +x /usr/local/bin/drupal
 
 # Install Drush launcher to add drush command to $PATH
-RUN curl -o drush.phar https://github.com/drush-ops/drush-launcher/releases/download/$DRUSH_VERSION/drush.phar
+RUN curl -OL https://github.com/drush-ops/drush-launcher/releases/download/$DRUSH_VERSION/drush.phar
 RUN mv drush.phar /usr/local/bin/drush
 RUN chmod +x /usr/local/bin/drush
 
