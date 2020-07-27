@@ -1,49 +1,17 @@
-# build site dependencies from debian stretch php 7.3 image
-FROM php:7.3-buster as builder
-
-ENV NODE_VERSION 12.x
-
-RUN apt-get update && apt-get install -y gnupg
-RUN curl -sL https://deb.nodesource.com/setup_$NODE_VERSION | bash -
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        libzip-dev \
-        build-essential \
-        libfreetype6-dev \
-        libjpeg62-turbo-dev \
-        libmcrypt-dev \
-        libpng-dev \
-        default-mysql-client \
-        git \
-        nodejs \
-    && docker-php-ext-install \
-        gd \
-        opcache \
-        pdo \
-        pdo_mysql \
-        zip
-
-RUN rm -rf /var/lib/apt/lists/*
-
-ENV COMPOSER_COMMIT 6e5e46fc7cab0015d5961f54bb39be1f4b330093
-ENV COMPOSER_SHA384SUM a5c698ffe4b8e849a443b120cd5ba38043260d5c4023dbf93e1558871f1f07f58274fc6f4c93bcfd858c6bd0775cd8d1
-RUN curl -o composer-setup.php "https://raw.githubusercontent.com/composer/getcomposer.org/$COMPOSER_COMMIT/web/installer" | php -- --quiet > 'composer-setup.php' \
-    && php -r "if (hash_file('SHA384', 'composer-setup.php') === '$COMPOSER_SHA384SUM' ) { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
-    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && php -r "unlink('composer-setup.php');"
-
-WORKDIR /root
-
-# build the server from debian stretch and nginx 1.16 stable
+# build the server from debian and nginx stable
 FROM php:7.3-fpm-buster
 
 # non root user to run the server after binding sockets as root
 ENV NGINX_DOC_ROOT /var/www/html/web
-ENV NGINX_VERSION   1.16.1
-ENV NJS_VERSION     0.3.5
+ENV NGINX_VERSION   1.18.0
+ENV NJS_VERSION     0.4.2
 ENV PKG_RELEASE     1~buster
 ENV DRUSH_VERSION   0.6.0
 
 RUN set -x \
+# create nginx user/group first, to be consistent throughout docker variants
+    && addgroup --system --gid 101 nginx \
+    && adduser --system --disabled-login --ingroup nginx --no-create-home --home /nonexistent --gecos "nginx user" --shell /bin/false --uid 101 nginx \
     && apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y gnupg1 ca-certificates \
     && \
@@ -118,21 +86,27 @@ RUN set -x \
     && apt-get install --no-install-recommends --no-install-suggests -y \
                         $nginxPackages \
                         gettext-base \
-    && apt-get remove --purge --auto-remove -y ca-certificates && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list \
+                        curl \
+    && apt-get remove --purge --auto-remove -y && rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list \
     \
 # if we have leftovers from building, let's purge them (including extra, unnecessary build deps)
     && if [ -n "$tempDir" ]; then \
         apt-get purge -y --auto-remove \
         && rm -rf "$tempDir" /etc/apt/sources.list.d/temp.list; \
-    fi
+    fi \
+# forward request and error logs to docker log collector
+    && ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
 
-WORKDIR /var/www/html
 RUN apt-get update && apt-get install -y --no-install-recommends \
     default-mysql-client \
     libpng-dev \
     libzip-dev \
     ca-certificates \
     supervisor \
+    wget \
+    vim \
+    git \
     && docker-php-ext-install gd \
     opcache \
     pdo \
@@ -141,6 +115,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 
+WORKDIR /root
 # Grab config dependencies for php, nginx and supervisor from source repo
 RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/php.ini
 RUN curl -O https://raw.githubusercontent.com/Bixal/php-nginx-drupal/master/nginx.conf
@@ -149,22 +124,17 @@ RUN mv php.ini /usr/local/etc/php
 RUN mv supervisord.conf /etc/
 RUN mv nginx.conf /etc/nginx/
 
-# Install latest version of drupal console
-RUN curl https://drupalconsole.com/installer -L -o drupal.phar
-RUN mv drupal.phar /usr/local/bin/drupal
-RUN chmod +x /usr/local/bin/drupal
-
-# Install Drush launcher to add drush command to $PATH
-RUN curl -o drush.phar https://github.com/drush-ops/drush-launcher/releases/download/$DRUSH_VERSION/drush.phar
-RUN mv drush.phar /usr/local/bin/drush
-RUN chmod +x /usr/local/bin/drush
-
-
-# copy in the files that the builder image built for drupal
-COPY --from=builder /var/www/html /var/www/html
+# Install Composer and Drush
+COPY install-composer.sh /root/install-composer.sh
+RUN bash -x install-composer.sh
+RUN chmod +x composer.phar
+RUN mv composer.phar /usr/local/bin/composer
+RUN composer global require drush/drush
+RUN echo "export PATH='$HOME/.composer/vendor/bin:$PATH'" >> /root/.bashrc
 
 # make nginx able to access web root
 RUN chown -R www-data:www-data /var/www/html
+WORKDIR /var/www/html
 
 EXPOSE 80
 
